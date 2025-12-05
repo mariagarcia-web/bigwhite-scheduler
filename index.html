@@ -85,6 +85,25 @@
             display: block;
         }
 
+        .password-prompt {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .password-prompt h2 {
+            color: #4a00e0;
+            margin-bottom: 20px;
+        }
+
+        .password-prompt input {
+            padding: 12px;
+            font-size: 1em;
+            border: 2px solid #4a00e0;
+            border-radius: 8px;
+            width: 250px;
+            margin: 20px 0;
+        }
+
         .calendar-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -220,32 +239,13 @@
         .booking-item {
             background: #f5f5f5;
             padding: 15px;
-            padding-right: 100px;
             margin-bottom: 10px;
             border-radius: 8px;
             border-left: 4px solid #4a00e0;
-            position: relative;
         }
 
         .booking-item strong {
             color: #4a00e0;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #f44336;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            border: none;
-        }
-
-        .delete-btn:hover {
-            background: #d32f2f;
         }
 
         .modal {
@@ -381,8 +381,8 @@
 
         <div class="tabs">
             <button class="tab active" onclick="switchTab('booking')">Book Migration</button>
-            <button class="tab" onclick="switchTab('admin')">Admin Panel</button>
-            <button class="tab" onclick="switchTab('view')">View Bookings</button>
+            <button class="tab" onclick="switchTab('admin')">Admin Panel 🔒</button>
+            <button class="tab" onclick="switchTab('view')">View Bookings 🔒</button>
         </div>
 
         <div class="content">
@@ -415,59 +415,78 @@
             </div>
 
             <div id="admin" class="tab-content">
-                <h2>Admin Controls</h2>
-                
-                <div class="info-box">
-                    <strong>👥 Manage Technicians:</strong><br>
-                    Add or remove technician names. Click ✕ to delete.
+                <div id="adminPrompt" class="password-prompt">
+                    <h2>🔒 Admin Access Required</h2>
+                    <p>Enter password to access admin controls</p>
+                    <input type="password" id="adminPassword" placeholder="Password">
+                    <button onclick="unlockAdmin()">Unlock</button>
                 </div>
-
-                <div class="form-group">
-                    <label>Add Technician:</label>
-                    <div class="add-tech-form">
-                        <input type="text" id="techName" placeholder="Enter technician name">
-                        <button onclick="addTechnician()">Add Tech</button>
-                    </div>
-                </div>
-
-                <h3>Current Technicians:</h3>
-                <div class="tech-list" id="techList"></div>
-
-                <div class="info-box" style="margin-top: 30px;">
-                    <strong>💡 Tech Availability:</strong><br>
-                    Set how many technicians are available on specific dates.
-                </div>
-
-                <div class="form-group">
-                    <label>Select Date:</label>
-                    <input type="date" id="blockDate">
+                <div id="adminContent" style="display: none;">
+                    <h2>Admin Controls</h2>
                     
-                    <div class="tech-selector">
-                        <label>Available Technicians:</label>
-                        <select id="techCount">
-                            <option value="0">0 Techs (Fully Blocked)</option>
-                            <option value="1">1 Tech Available</option>
-                            <option value="2">2 Techs Available</option>
-                            <option value="3">3 Techs Available (Default)</option>
-                        </select>
+                    <div class="info-box">
+                        <strong>👥 Manage Technicians:</strong><br>
+                        Add technician names to track assignments.
                     </div>
-                    
-                    <button onclick="setTechAvailability()" style="margin-top: 10px;">Set Availability</button>
-                </div>
 
-                <h3 style="margin-top: 30px;">Modified Dates:</h3>
-                <div class="blocked-dates" id="blockedDatesList"></div>
+                    <div class="form-group">
+                        <label>Add Technician:</label>
+                        <div class="add-tech-form">
+                            <input type="text" id="techName" placeholder="Enter technician name">
+                            <button onclick="addTechnician()">Add Tech</button>
+                        </div>
+                    </div>
 
-                <div class="export-section">
-                    <h3>Export to Google Calendar</h3>
-                    <p>Download all bookings as a CSV file:</p>
-                    <button onclick="exportToCSV()">📅 Download CSV for Google Calendar</button>
+                    <h3>Current Technicians:</h3>
+                    <div class="tech-list" id="techList"></div>
+
+                    <div class="info-box" style="margin-top: 30px;">
+                        <strong>💡 Tech Availability:</strong><br>
+                        Set how many technicians are available on specific dates.
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Date:</label>
+                        <input type="date" id="blockDate">
+                        
+                        <div class="tech-selector">
+                            <label>Available Technicians:</label>
+                            <select id="techCount">
+                                <option value="0">0 Techs (Fully Blocked)</option>
+                                <option value="1">1 Tech Available</option>
+                                <option value="2">2 Techs Available</option>
+                                <option value="3">3 Techs Available (Default)</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="setTechAvailability()" style="margin-top: 10px;">Set Availability</button>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">Modified Dates:</h3>
+                    <div class="blocked-dates" id="blockedDatesList"></div>
+
+                    <div class="export-section">
+                        <h3>Export to Google Calendar</h3>
+                        <p>Download all bookings as a CSV file:</p>
+                        <button onclick="exportToCSV()">📅 Download CSV</button>
+                    </div>
+
+                    <button onclick="logout()" style="background: #666; margin-top: 20px;">🔓 Logout</button>
                 </div>
             </div>
 
             <div id="view" class="tab-content">
-                <h2>All Bookings</h2>
-                <div class="booking-list" id="bookingsList"></div>
+                <div id="viewPrompt" class="password-prompt">
+                    <h2>🔒 Admin Access Required</h2>
+                    <p>Enter password to view all bookings</p>
+                    <input type="password" id="viewPassword" placeholder="Password">
+                    <button onclick="unlockView()">Unlock</button>
+                </div>
+                <div id="viewContent" style="display: none;">
+                    <h2>All Bookings</h2>
+                    <div class="booking-list" id="bookingsList"></div>
+                    <button onclick="logout()" style="background: #666; margin-top: 20px;">🔓 Logout</button>
+                </div>
             </div>
         </div>
     </div>
@@ -504,7 +523,6 @@
             <div id="selectedSlotInfo" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
 
             <button onclick="confirmBooking()">Confirm Booking</button>
-            
             <button class="close-modal" onclick="closeModal()">Cancel</button>
         </div>
     </div>
@@ -512,37 +530,72 @@
     <script>
         const TIME_SLOTS = ['08:00 AM', '09:30 AM', '11:00 AM', '12:30 PM', '02:00 PM'];
         const DEFAULT_TECHS = 3;
+        const ADMIN_PASSWORD = 'BigWhite2026';
         
         let currentBooking = null;
         let bookings = [];
         let techAvailability = {};
         let technicians = [];
+        let isAuthenticated = false;
 
-        function init() {
-            loadData();
-            updateAll();
-        }
-
-        function loadData() {
-            bookings = JSON.parse(localStorage.getItem('migration_bookings') || '[]');
-            techAvailability = JSON.parse(localStorage.getItem('tech_availability') || '{}');
-            technicians = JSON.parse(localStorage.getItem('technicians') || '[]');
-        }
-
-        function saveData() {
-            localStorage.setItem('migration_bookings', JSON.stringify(bookings));
-            localStorage.setItem('tech_availability', JSON.stringify(techAvailability));
-            localStorage.setItem('technicians', JSON.stringify(technicians));
-        }
-
-        function updateAll() {
+        async function init() {
+            await loadData();
             updateCalendar();
-            updateTechList();
-            updateBlockedDatesList();
-            updateBookingsList();
         }
 
-        function addTechnician() {
+        async function loadData() {
+            try {
+                bookings = JSON.parse(await window.db.get('migration_bookings') || '[]');
+                techAvailability = JSON.parse(await window.db.get('tech_availability') || '{}');
+                technicians = JSON.parse(await window.db.get('technicians') || '[]');
+            } catch (error) {
+                console.log('Initializing');
+            }
+        }
+
+        async function saveData() {
+            await window.db.set('migration_bookings', JSON.stringify(bookings));
+            await window.db.set('tech_availability', JSON.stringify(techAvailability));
+            await window.db.set('technicians', JSON.stringify(technicians));
+        }
+
+        function unlockAdmin() {
+            const pwd = document.getElementById('adminPassword').value;
+            if (pwd === ADMIN_PASSWORD) {
+                isAuthenticated = true;
+                document.getElementById('adminPrompt').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                updateTechList();
+                updateBlockedDatesList();
+            } else {
+                alert('❌ Incorrect password');
+            }
+        }
+
+        function unlockView() {
+            const pwd = document.getElementById('viewPassword').value;
+            if (pwd === ADMIN_PASSWORD) {
+                isAuthenticated = true;
+                document.getElementById('viewPrompt').style.display = 'none';
+                document.getElementById('viewContent').style.display = 'block';
+                updateBookingsList();
+            } else {
+                alert('❌ Incorrect password');
+            }
+        }
+
+        function logout() {
+            isAuthenticated = false;
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('viewContent').style.display = 'none';
+            document.getElementById('adminPrompt').style.display = 'block';
+            document.getElementById('viewPrompt').style.display = 'block';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('viewPassword').value = '';
+            switchTab('booking');
+        }
+
+        async function addTechnician() {
             const input = document.getElementById('techName');
             const name = input.value.trim();
             
@@ -557,17 +610,9 @@
             }
             
             technicians.push(name);
-            saveData();
+            await saveData();
             updateTechList();
             input.value = '';
-        }
-
-        function deleteTechnician(tech) {
-            if (confirm('Remove ' + tech + '?')) {
-                technicians = technicians.filter(t => t !== tech);
-                saveData();
-                updateTechList();
-            }
         }
 
         function updateTechList() {
@@ -582,7 +627,7 @@
             technicians.forEach(tech => {
                 const tag = document.createElement('div');
                 tag.className = 'tech-tag';
-                tag.innerHTML = '<span>' + tech + '</span><span class="remove-block" onclick="deleteTechnician(\'' + tech.replace(/'/g, "\\'") + '\')">✕</span>';
+                tag.innerHTML = '<span>' + tech + '</span>';
                 list.appendChild(tag);
             });
         }
@@ -610,8 +655,6 @@
             
             event.target.classList.add('active');
             document.getElementById(tabName).classList.add('active');
-            
-            if (tabName === 'view') updateBookingsList();
         }
 
         function parseDateString(dateStr) {
@@ -712,7 +755,7 @@
             document.getElementById('specialInstructions').value = '';
         }
 
-        function confirmBooking() {
+        async function confirmBooking() {
             const apartment = document.getElementById('apartmentNumber').value.trim();
             const name = document.getElementById('tenantName').value.trim();
             const email = document.getElementById('contactEmail').value.trim();
@@ -735,13 +778,13 @@
                 createdAt: new Date().toISOString()
             });
 
-            saveData();
+            await saveData();
             closeModal();
             updateCalendar();
             alert('✅ Booking confirmed!\nAssigned to: ' + tech);
         }
 
-        function setTechAvailability() {
+        async function setTechAvailability() {
             const date = document.getElementById('blockDate').value;
             const count = parseInt(document.getElementById('techCount').value);
             
@@ -756,7 +799,7 @@
                 techAvailability[date] = count;
             }
             
-            saveData();
+            await saveData();
             updateCalendar();
             updateBlockedDatesList();
             document.getElementById('blockDate').value = '';
@@ -813,8 +856,7 @@
                 item.className = 'booking-item';
                 const dateObj = parseDateString(booking.date);
                 
-                item.innerHTML = '<button class="delete-btn" onclick="deleteBooking(' + booking.id + ')">Delete</button>' +
-                    '<strong>' + booking.apartment + '</strong> - ' + booking.name + '<br>📅 ' +
+                item.innerHTML = '<strong>' + booking.apartment + '</strong> - ' + booking.name + '<br>📅 ' +
                     dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) +
                     ' at ' + booking.time + '<br>👤 Technician: <span class="tech-badge">' + booking.technician +
                     '</span><br>📧 ' + booking.email + ' | 📱 ' + booking.phone +
@@ -822,15 +864,6 @@
                 
                 list.appendChild(item);
             });
-        }
-
-        function deleteBooking(id) {
-            if (confirm('Delete this booking?')) {
-                bookings = bookings.filter(b => b.id !== id);
-                saveData();
-                updateCalendar();
-                updateBookingsList();
-            }
         }
 
         function exportToCSV() {
@@ -853,7 +886,7 @@
                 const period = timeParts[1];
                 let startHour = hourMin[0];
                 if (period === 'PM' && startHour !== 12) startHour += 12;
-                if (period === 'AM' && startHour === 12) startHour = 0;
+                if (perio === 'AM' && startHour === 12) startHour = 0;
                 
                 const startTime = String(startHour).padStart(2, '0') + ':' + String(hourMin[1]).padStart(2, '0') + ':00';
                 
@@ -889,3 +922,4 @@
     </script>
 </body>
 </html>
+
