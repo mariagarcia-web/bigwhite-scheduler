@@ -1,0 +1,891 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big White Ski Resort - Migration Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            font-size: 1em;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: white;
+            color: #4a00e0;
+            border-bottom: 3px solid #4a00e0;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .calendar-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .date-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .date-card:hover {
+            border-color: #4a00e0;
+            box-shadow: 0 5px 15px rgba(74, 0, 224, 0.2);
+        }
+
+        .date-card.blocked {
+            background: #ffebee;
+            border-color: #ef5350;
+        }
+
+        .date-card.limited {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+
+        .date-header {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .tech-availability {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .time-slot {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-slot.available {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+        }
+
+        .time-slot.available:hover {
+            background: #4caf50;
+            color: white;
+        }
+
+        .time-slot.limited {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+        }
+
+        .time-slot.limited:hover {
+            background: #ff9800;
+            color: white;
+        }
+
+        .time-slot.full {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .slot-count {
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4a00e0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 0, 224, 0.3);
+        }
+
+        .booking-list {
+            margin-top: 20px;
+        }
+
+        .booking-item {
+            background: #f5f5f5;
+            padding: 15px;
+            padding-right: 100px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #4a00e0;
+            position: relative;
+        }
+
+        .booking-item strong {
+            color: #4a00e0;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f44336;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border: none;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #4a00e0;
+        }
+
+        .close-modal {
+            background: #666;
+            margin-top: 15px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .blocked-dates {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .blocked-date-tag {
+            background: #f44336;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .blocked-date-tag.partial {
+            background: #ff9800;
+        }
+
+        .remove-block {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .export-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .tech-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .tech-tag {
+            background: #4a00e0;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: #4a00e0;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .add-tech-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .add-tech-form input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎿 Big White Ski Resort Migration Scheduler</h1>
+            <p>TELUS Migration Booking System</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('booking')">Book Migration</button>
+            <button class="tab" onclick="switchTab('admin')">Admin Panel</button>
+            <button class="tab" onclick="switchTab('view')">View Bookings</button>
+        </div>
+
+        <div class="content">
+            <div id="booking" class="tab-content active">
+                <div class="info-box">
+                    <strong>📋 Booking Information:</strong><br>
+                    • Each migration takes 1.5 hours<br>
+                    • Up to 3 technicians available daily<br>
+                    • Working hours: 8:00 AM - 4:00 PM<br>
+                    • Select an available time slot below
+                </div>
+
+                <div class="form-group">
+                    <label>Select Month:</label>
+                    <select id="monthSelect" onchange="updateCalendar()">
+                        <option value="0">January 2026</option>
+                        <option value="1">February 2026</option>
+                        <option value="2">March 2026</option>
+                        <option value="3">April 2026</option>
+                        <option value="4">May 2026</option>
+                        <option value="5">June 2026</option>
+                        <option value="6">July 2026</option>
+                        <option value="7">August 2026</option>
+                        <option value="8">September 2026</option>
+                        <option value="9">October 2026</option>
+                    </select>
+                </div>
+
+                <div id="calendar" class="calendar-container"></div>
+            </div>
+
+            <div id="admin" class="tab-content">
+                <h2>Admin Controls</h2>
+                
+                <div class="info-box">
+                    <strong>👥 Manage Technicians:</strong><br>
+                    Add or remove technician names. Click ✕ to delete.
+                </div>
+
+                <div class="form-group">
+                    <label>Add Technician:</label>
+                    <div class="add-tech-form">
+                        <input type="text" id="techName" placeholder="Enter technician name">
+                        <button onclick="addTechnician()">Add Tech</button>
+                    </div>
+                </div>
+
+                <h3>Current Technicians:</h3>
+                <div class="tech-list" id="techList"></div>
+
+                <div class="info-box" style="margin-top: 30px;">
+                    <strong>💡 Tech Availability:</strong><br>
+                    Set how many technicians are available on specific dates.
+                </div>
+
+                <div class="form-group">
+                    <label>Select Date:</label>
+                    <input type="date" id="blockDate">
+                    
+                    <div class="tech-selector">
+                        <label>Available Technicians:</label>
+                        <select id="techCount">
+                            <option value="0">0 Techs (Fully Blocked)</option>
+                            <option value="1">1 Tech Available</option>
+                            <option value="2">2 Techs Available</option>
+                            <option value="3">3 Techs Available (Default)</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="setTechAvailability()" style="margin-top: 10px;">Set Availability</button>
+                </div>
+
+                <h3 style="margin-top: 30px;">Modified Dates:</h3>
+                <div class="blocked-dates" id="blockedDatesList"></div>
+
+                <div class="export-section">
+                    <h3>Export to Google Calendar</h3>
+                    <p>Download all bookings as a CSV file:</p>
+                    <button onclick="exportToCSV()">📅 Download CSV for Google Calendar</button>
+                </div>
+            </div>
+
+            <div id="view" class="tab-content">
+                <h2>All Bookings</h2>
+                <div class="booking-list" id="bookingsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Complete Your Booking</div>
+            
+            <div class="form-group">
+                <label>Apartment Number:</label>
+                <input type="text" id="apartmentNumber" placeholder="e.g., A-101">
+            </div>
+
+            <div class="form-group">
+                <label>Tenant/Owner Name:</label>
+                <input type="text" id="tenantName" placeholder="Full Name">
+            </div>
+
+            <div class="form-group">
+                <label>Contact Email:</label>
+                <input type="email" id="contactEmail" placeholder="email@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>Contact Phone:</label>
+                <input type="tel" id="contactPhone" placeholder="(555) 123-4567">
+            </div>
+
+            <div class="form-group">
+                <label>Special Instructions (Optional):</label>
+                <textarea id="specialInstructions" rows="3" placeholder="Any special access instructions or notes..."></textarea>
+            </div>
+
+            <div id="selectedSlotInfo" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
+
+            <button onclick="confirmBooking()">Confirm Booking</button>
+            
+            <button class="close-modal" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const TIME_SLOTS = ['08:00 AM', '09:30 AM', '11:00 AM', '12:30 PM', '02:00 PM'];
+        const DEFAULT_TECHS = 3;
+        
+        let currentBooking = null;
+        let bookings = [];
+        let techAvailability = {};
+        let technicians = [];
+
+        function init() {
+            loadData();
+            updateAll();
+        }
+
+        function loadData() {
+            bookings = JSON.parse(localStorage.getItem('migration_bookings') || '[]');
+            techAvailability = JSON.parse(localStorage.getItem('tech_availability') || '{}');
+            technicians = JSON.parse(localStorage.getItem('technicians') || '[]');
+        }
+
+        function saveData() {
+            localStorage.setItem('migration_bookings', JSON.stringify(bookings));
+            localStorage.setItem('tech_availability', JSON.stringify(techAvailability));
+            localStorage.setItem('technicians', JSON.stringify(technicians));
+        }
+
+        function updateAll() {
+            updateCalendar();
+            updateTechList();
+            updateBlockedDatesList();
+            updateBookingsList();
+        }
+
+        function addTechnician() {
+            const input = document.getElementById('techName');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('Please enter a technician name');
+                return;
+            }
+            
+            if (technicians.includes(name)) {
+                alert('This technician is already in the list');
+                return;
+            }
+            
+            technicians.push(name);
+            saveData();
+            updateTechList();
+            input.value = '';
+        }
+
+        function deleteTechnician(tech) {
+            if (confirm('Remove ' + tech + '?')) {
+                technicians = technicians.filter(t => t !== tech);
+                saveData();
+                updateTechList();
+            }
+        }
+
+        function updateTechList() {
+            const list = document.getElementById('techList');
+            list.innerHTML = '';
+            
+            if (technicians.length === 0) {
+                list.innerHTML = '<p style="color: #666;">No technicians added yet.</p>';
+                return;
+            }
+            
+            technicians.forEach(tech => {
+                const tag = document.createElement('div');
+                tag.className = 'tech-tag';
+                tag.innerHTML = '<span>' + tech + '</span><span class="remove-block" onclick="deleteTechnician(\'' + tech.replace(/'/g, "\\'") + '\')">✕</span>';
+                list.appendChild(tag);
+            });
+        }
+
+        function getAvailableTechnician(date, time) {
+            if (technicians.length === 0) return 'Unassigned';
+            
+            const existing = bookings.filter(b => b.date === date && b.time === time);
+            const assigned = existing.map(b => b.technician);
+            
+            for (let tech of technicians) {
+                if (!assigned.includes(tech)) return tech;
+            }
+            
+            return 'Tech ' + (existing.length + 1);
+        }
+
+        function getAvailableTechs(date) {
+            return techAvailability[date] !== undefined ? techAvailability[date] : DEFAULT_TECHS;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'view') updateBookingsList();
+        }
+
+        function parseDateString(dateStr) {
+            const parts = dateStr.split('-').map(Number);
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        function updateCalendar() {
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const year = 2026;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                
+                if (date < today) continue;
+                if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+                const dateStr = formatDate(date);
+                const availableTechs = getAvailableTechs(dateStr);
+
+                const card = document.createElement('div');
+                card.className = 'date-card' + (availableTechs === 0 ? ' blocked' : availableTechs < DEFAULT_TECHS ? ' limited' : '');
+                
+                const header = document.createElement('div');
+                header.className = 'date-header';
+                header.textContent = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                card.appendChild(header);
+
+                const info = document.createElement('div');
+                info.className = 'tech-availability';
+                if (availableTechs === 0) {
+                    info.textContent = '🚫 No Technicians Available';
+                    info.style.color = '#d32f2f';
+                } else if (availableTechs < DEFAULT_TECHS) {
+                    info.textContent = '⚠️ ' + availableTechs + ' Tech' + (availableTechs > 1 ? 's' : '') + ' Available';
+                    info.style.color = '#f57c00';
+                } else {
+                    info.textContent = '✓ ' + availableTechs + ' Techs Available';
+                    info.style.color = '#388e3c';
+                }
+                card.appendChild(info);
+
+                if (availableTechs > 0) {
+                    TIME_SLOTS.forEach(time => {
+                        const slot = createTimeSlot(dateStr, time, availableTechs);
+                        card.appendChild(slot);
+                    });
+                }
+
+                calendar.appendChild(card);
+            }
+        }
+
+        function createTimeSlot(date, time, maxTechs) {
+            const slot = document.createElement('div');
+            const booked = bookings.filter(b => b.date === date && b.time === time).length;
+            const available = maxTechs - booked;
+
+            if (available === 0) {
+                slot.className = 'time-slot full';
+                slot.innerHTML = '<span>' + time + '</span><span class="slot-count">FULL</span>';
+            } else {
+                slot.className = available === 1 ? 'time-slot limited' : 'time-slot available';
+                slot.innerHTML = '<span>' + time + '</span><span class="slot-count">' + available + (available === 1 ? ' left' : ' available') + '</span>';
+                slot.onclick = () => openBookingModal(date, time);
+            }
+
+            return slot;
+        }
+
+        function openBookingModal(date, time) {
+            currentBooking = { date, time };
+            const modal = document.getElementById('bookingModal');
+            const info = document.getElementById('selectedSlotInfo');
+            
+            const dateObj = parseDateString(date);
+            const tech = getAvailableTechnician(date, time);
+            
+            info.innerHTML = '<strong>Selected Slot:</strong><br>📅 ' +
+                dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) +
+                '<br>🕐 ' + time + ' (1.5 hours)<br>👤 Assigned Technician: <span class="tech-badge">' + tech + '</span>';
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').classList.remove('active');
+            document.getElementById('apartmentNumber').value = '';
+            document.getElementById('tenantName').value = '';
+            document.getElementById('contactEmail').value = '';
+            document.getElementById('contactPhone').value = '';
+            document.getElementById('specialInstructions').value = '';
+        }
+
+        function confirmBooking() {
+            const apartment = document.getElementById('apartmentNumber').value.trim();
+            const name = document.getElementById('tenantName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const phone = document.getElementById('contactPhone').value.trim();
+            const instructions = document.getElementById('specialInstructions').value.trim();
+
+            if (!apartment || !name || !email || !phone) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const tech = getAvailableTechnician(currentBooking.date, currentBooking.time);
+
+            bookings.push({
+                id: Date.now(),
+                date: currentBooking.date,
+                time: currentBooking.time,
+                apartment, name, email, phone, instructions,
+                technician: tech,
+                createdAt: new Date().toISOString()
+            });
+
+            saveData();
+            closeModal();
+            updateCalendar();
+            alert('✅ Booking confirmed!\nAssigned to: ' + tech);
+        }
+
+        function setTechAvailability() {
+            const date = document.getElementById('blockDate').value;
+            const count = parseInt(document.getElementById('techCount').value);
+            
+            if (!date) {
+                alert('Please select a date');
+                return;
+            }
+
+            if (count === DEFAULT_TECHS) {
+                delete techAvailability[date];
+            } else {
+                techAvailability[date] = count;
+            }
+            
+            saveData();
+            updateCalendar();
+            updateBlockedDatesList();
+            document.getElementById('blockDate').value = '';
+            document.getElementById('techCount').value = '3';
+        }
+
+        function updateBlockedDatesList() {
+            const list = document.getElementById('blockedDatesList');
+            list.innerHTML = '';
+
+            const dates = Object.keys(techAvailability).sort();
+
+            if (dates.length === 0) {
+                list.innerHTML = '<p style="color: #666;">No modified dates.</p>';
+                return;
+            }
+
+            dates.forEach(date => {
+                const count = techAvailability[date];
+                const tag = document.createElement('div');
+                tag.className = count === 0 ? 'blocked-date-tag' : 'blocked-date-tag partial';
+                
+                const dateObj = parseDateString(date);
+                const status = count === 0 ? 'Fully Blocked' : count + ' Tech' + (count > 1 ? 's' : '') + ' Available';
+                
+                tag.innerHTML = '<span>' + dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' - ' + status + '</span><span class="remove-block" onclick="removeDate(\'' + date + '\')">✕</span>';
+                list.appendChild(tag);
+            });
+        }
+
+        function removeDate(date) {
+            delete techAvailability[date];
+            saveData();
+            updateCalendar();
+            updateBlockedDatesList();
+        }
+
+        function updateBookingsList() {
+            const list = document.getElementById('bookingsList');
+            list.innerHTML = '';
+
+            if (bookings.length === 0) {
+                list.innerHTML = '<p>No bookings yet.</p>';
+                return;
+            }
+
+            const sorted = [...bookings].sort((a, b) => {
+                if (a.date !== b.date) return a.date.localeCompare(b.date);
+                return a.time.localeCompare(b.time);
+            });
+
+            sorted.forEach(booking => {
+                const item = document.createElement('div');
+                item.className = 'booking-item';
+                const dateObj = parseDateString(booking.date);
+                
+                item.innerHTML = '<button class="delete-btn" onclick="deleteBooking(' + booking.id + ')">Delete</button>' +
+                    '<strong>' + booking.apartment + '</strong> - ' + booking.name + '<br>📅 ' +
+                    dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) +
+                    ' at ' + booking.time + '<br>👤 Technician: <span class="tech-badge">' + booking.technician +
+                    '</span><br>📧 ' + booking.email + ' | 📱 ' + booking.phone +
+                    (booking.instructions ? '<br>📝 ' + booking.instructions : '');
+                
+                list.appendChild(item);
+            });
+        }
+
+        function deleteBooking(id) {
+            if (confirm('Delete this booking?')) {
+                bookings = bookings.filter(b => b.id !== id);
+                saveData();
+                updateCalendar();
+                updateBookingsList();
+            }
+        }
+
+        function exportToCSV() {
+            if (bookings.length === 0) {
+                alert('No bookings to export yet!');
+                return;
+            }
+
+            let csv = 'Subject,Start Date,Start Time,End Date,End Time,Description,Location\n';
+            
+            bookings.forEach(booking => {
+                const dateObj = parseDateString(booking.date);
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                const dateStr = month + '/' + day + '/' + year;
+                
+                const timeParts = booking.time.split(' ');
+                const hourMin = timeParts[0].split(':').map(Number);
+                const period = timeParts[1];
+                let startHour = hourMin[0];
+                if (period === 'PM' && startHour !== 12) startHour += 12;
+                if (period === 'AM' && startHour === 12) startHour = 0;
+                
+                const startTime = String(startHour).padStart(2, '0') + ':' + String(hourMin[1]).padStart(2, '0') + ':00';
+                
+                const endDate = new Date(dateObj);
+                endDate.setHours(startHour);
+                endDate.setMinutes(hourMin[1] + 90);
+                const endTime = String(endDate.getHours()).padStart(2, '0') + ':' + String(endDate.getMinutes()).padStart(2, '0') + ':00';
+                
+                const desc = 'Apartment: ' + booking.apartment + '\\nTenant: ' + booking.name +
+                    '\\nTechnician: ' + booking.technician + '\\nEmail: ' + booking.email +
+                    '\\nPhone: ' + booking.phone + (booking.instructions ? '\\nNotes: ' + booking.instructions : '');
+                
+                csv += '"Migration - ' + booking.apartment + '","'+ dateStr + '","' + startTime + '","' +
+                    dateStr + '","' + endTime + '","' + desc + '","Big White Ski Resort"\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = 'big-white-migration-bookings.csv';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function formatDate(date) {
+            return date.getFullYear() + '-' + 
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(date.getDate()).padStart(2, '0');
+        }
+
+        init();
+    </script>
+</body>
+</html>
